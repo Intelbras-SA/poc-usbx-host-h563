@@ -212,14 +212,22 @@ static VOID app_ux_host_thread_entry(ULONG thread_input)
 
 	printf("Initializing the host controller driver...");
 	/* Initialize the host controller driver */
-	ux_host_stack_hcd_register(_ux_system_host_hcd_stm32_name,
+	if (ux_host_stack_hcd_register(_ux_system_host_hcd_stm32_name,
 			_ux_hcd_stm32_initialize, (ULONG)USB_DRD_FS,
-			(ULONG)&hhcd_USB_DRD_FS);
+			(ULONG)&hhcd_USB_DRD_FS) != UX_SUCCESS)
+	{
+		printf("Error registering host controller driver!\r\n");
+		return;
+	}
 
-	printf("Host controller driver initialized!\n\r\n");
+	printf("Host controller driver initialized!\r\n");
 
-	/* Start USB Host  */
-	HAL_HCD_Start(&hhcd_USB_DRD_FS);
+	/* Start USB Host */
+	if (HAL_HCD_Start(&hhcd_USB_DRD_FS) != HAL_OK)
+	{
+		printf("Error starting USB Host!\r\n");
+		return;
+	}
 
 	printf("******** USB DRD CDC HOST ********\r\n");
 	printf("USB Host library started!\r\n");
@@ -295,7 +303,7 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
 	case UX_DEVICE_CONNECTION:
 
 		/* USER CODE BEGIN UX_DEVICE_CONNECTION */
-
+		printf("USB Device Connected!\r\n");
 		/* USER CODE END UX_DEVICE_CONNECTION */
 
 		break;
@@ -303,7 +311,7 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
 	case UX_DEVICE_DISCONNECTION:
 
 		/* USER CODE BEGIN UX_DEVICE_DISCONNECTION */
-
+		printf("USB Device Disconnected!\r\n");
 		/* USER CODE END UX_DEVICE_DISCONNECTION */
 
 		break;
@@ -335,8 +343,7 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
 VOID ux_host_error_callback(UINT system_level, UINT system_context, UINT error_code)
 {
 	/* USER CODE BEGIN ux_host_error_callback0 */
-	UX_PARAMETER_NOT_USED(system_level);
-	UX_PARAMETER_NOT_USED(system_context);
+	printf("USB Error - Level: %d, Context: %d, Code: 0x%x\r\n", system_level, system_context, error_code);
 	/* USER CODE END ux_host_error_callback0 */
 
 	switch (error_code)
